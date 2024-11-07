@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  elastic:
+    container_name: elastic
+    restart: always
+    image: elasticsearch:7.17.6
+    volumes:
+      - elastic-data:/usr/share/elasticsearch/data
+      - ./elastic:/usr/share/elasticsearch/config/hunspell
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+
+  web:
+    container_name: php-nginx
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html         # Монтируем текущую директорию
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: php-fpm
+    volumes:
+      - .:/var/www/html         # Монтируем текущую директорию
+
+volumes:
+  elastic-data:
+    driver: local
